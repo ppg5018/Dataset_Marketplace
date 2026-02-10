@@ -1,7 +1,7 @@
 from flask import Blueprint, request, jsonify
 from flask_login import login_required, current_user
-from models import Dataset, Transaction
-import spark_utils
+from app.models import Dataset, Transaction
+from app.utils import spark as spark_utils
 import os
 
 data_bp = Blueprint('data', __name__, url_prefix='/api/data')
@@ -279,7 +279,7 @@ def execute_query(dataset_id):
         result = spark_utils.execute_sql_query(dataset.file_path, query)
         # Increment query count
         dataset.query_count = (dataset.query_count or 0) + 1
-        from extensions import db
+        from app.extensions import db
         db.session.commit()
         return jsonify(result)
     except Exception as e:
@@ -296,7 +296,7 @@ def quality_score(dataset_id):
         score = spark_utils.calculate_quality_score(dataset.file_path)
         # Update dataset quality_score field
         dataset.quality_score = score.get('overall_score', 0)
-        from extensions import db
+        from app.extensions import db
         db.session.commit()
         return jsonify(score)
     except Exception as e:

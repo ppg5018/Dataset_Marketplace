@@ -5,8 +5,9 @@ API endpoints for web scraping functionality
 
 from flask import Blueprint, render_template, request, jsonify
 from flask_login import login_required, current_user
-import scraper_utils
-from models import Dataset, db
+from app.utils import scraper as scraper_utils
+from app.models import Dataset
+from app.extensions import db
 import os
 from datetime import datetime
 
@@ -84,7 +85,7 @@ def save_dataset():
         
         # Calculate quality score
         try:
-            import spark_utils
+            from app.utils import spark as spark_utils
             quality_data = spark_utils.calculate_quality_score(filepath)
             new_dataset.quality_score = quality_data.get('overall_score', 0)
             db.session.commit()

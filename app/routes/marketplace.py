@@ -1,10 +1,10 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash
 from flask_login import login_required, current_user
 from werkzeug.utils import secure_filename
-from extensions import db
-from models import Dataset, Transaction, Review
+from app.extensions import db
+from app.models import Dataset, Transaction, Review
 import os
-import spark_utils
+from app.utils import spark as spark_utils
 
 marketplace_bp = Blueprint('marketplace', __name__)
 
@@ -78,7 +78,7 @@ def dataset_detail(dataset_id):
             has_access = True
             
     # Increment view count
-    from extensions import db
+    from app.extensions import db
     dataset.view_count = (dataset.view_count or 0) + 1
     db.session.commit()
             
