@@ -1,0 +1,446 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="dataset-detail">
+    <div class="detail-header">
+        <div>
+            <h1>{{ dataset.title }}</h1>
+            <p class="owner">By <a href="{{ url_for('marketplace.seller_profile', username=dataset.owner.username) }}"
+                    style="color: var(--primary-color);">{{ dataset.owner.username }}</a> • Uploaded {{
+                dataset.created_at.strftime('%Y-%m-%d') }}
+            </p>
+        </div>
+        <div class="actions">
+            {% if has_access %}
+            <span class="badge success">Access Granted</span>
+            {% else %}
+            <form action="{{ url_for('marketplace.buy_dataset', dataset_id=dataset.id) }}" method="POST">
+                <button type="submit" class="btn btn-large btn-primary">
+                    {% if dataset.price == 0 %}Get for Free{% else %}Buy for ${{ dataset.price }}{% endif %}
+                </button>
+            </form>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="detail-content">
+        <div class="section description">
+            <h3>Description</h3>
+            <p>{{ dataset.description }}</p>
+        </div>
+
+        {% if stats %}
+        <div class="section stats">
+            <h3>Dataset Statistics</h3>
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <label>Rows</label>
+                    <span>{{ stats.total_rows }}</span>
+                </div>
+                <div class="stat-item">
+                    <label>Columns</label>
+                    <span>{{ stats.columns|length }}</span>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        {% if has_access %}
+        <div class="section analysis-tools">
+            <h2>Data Operations</h2>
+            <div class="tabs">
+                <button class="tab-btn active" onclick="showTab('preview')">Preview</button>
+                <button class="tab-btn" onclick="showTab('sql-query')"><i class="fas fa-code"></i> SQL Query</button>
+                <button class="tab-btn" onclick="showTab('dashboards')"><i class="fas fa-chart-bar"></i>
+                    Dashboards</button>
+                <button class="tab-btn" onclick="showTab('profile')"><i class="fas fa-file-alt"></i> Profile</button>
+                <button class="tab-btn" onclick="showTab('quality')"><i class="fas fa-check-circle"></i>
+                    Quality</button>
+                <button class="tab-btn" onclick="showTab('sample')"><i class="fas fa-download"></i> Sample</button>
+                <button class="tab-btn" onclick="showTab('clean')">Clean</button>
+                <button class="tab-btn" onclick="showTab('advanced-clean')">Advanced Engineering</button>
+                <button class="tab-btn" onclick="showTab('visualize')">Visualize</button>
+                <button class="tab-btn" onclick="showTab('synthetic')">Synthetic Data</button>
+                <button class="tab-btn" onclick="showTab('ml')">Machine Learning</button>
+            </div>
+
+            <!-- SQL Query Tab -->
+            <div id="sql-query" class="tab-content">
+                <h3><i class="fas fa-code"></i> Run SQL Queries</h3>
+                <p style="color: var(--text-secondary); margin-bottom: 1rem;">Execute SQL queries on your dataset. Only
+                    SELECT queries are allowed for security.</p>
+
+                <!-- Natural Language Query -->
+                <div class="form-group"
+                    style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 1.5rem; border-radius: 12px; margin-bottom: 1.5rem;">
+                    <h4 style="color: white; margin-top: 0; margin-bottom: 0.75rem;"><i class="fas fa-magic"></i>
+                        Natural Language Query</h4>
+                    <p style="color: rgba(255,255,255,0.9); font-size: 0.9rem; margin-bottom: 1rem;">Ask questions in
+                        plain English, we'll convert them to SQL</p>
+                    <input type="text" id="nl-query-input" placeholder="e.g., Show me the top 10 customers by sales"
+                        style="width: 100%; padding: 12px; border: none; border-radius: 8px; font-size: 1rem; margin-bottom: 1rem;">
+                    <div style="display: flex; gap: 1rem; align-items: center;">
+                        <button onclick="convertNLToSQL({{ dataset.id }})" class="btn"
+                            style="background: white; color: #667eea; border: none;">
+                            <i class="fas fa-magic"></i> Convert to SQL
+                        </button>
+                        <span id="nl-status" style="color: white;"></span>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>SQL Query</label>
+                    <textarea id="sql-query-input" rows="6" placeholder="SELECT * FROM dataset LIMIT 10"
+                        style="font-family: 'Courier New', monospace; width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 8px; background: var(--bg-secondary);"></textarea>
+                </div>
+
+                <div style="display: flex; gap: 1rem; align-items: center; margin-bottom: 1rem;">
+                    <button onclick="executeSQL({{ dataset.id }})" class="btn btn-primary">
+                        <i class="fas fa-play"></i> Execute Query
+                    </button>
+                    <button onclick="insertSampleQuery()" class="btn btn-secondary">
+                        <i class="fas fa-lightbulb"></i> Sample Queries
+                    </button>
+                    <span id="sql-status" style="color: var(--text-secondary);"></span>
+                </div>
+
+                <div id="sql-results-container"></div>
+            </div>
+
+            <!-- Quality Score Tab -->
+            <div id="quality" class="tab-content">
+                <h3><i class="fas fa-check-circle"></i> Data Quality Report</h3>
+                <p style="color: var(--text-secondary); margin-bottom: 1rem;">Comprehensive quality analysis of your
+                    dataset.</p>
+
+                <button onclick="loadQualityScore({{ dataset.id }})" class="btn btn-primary"
+                    style="margin-bottom: 1rem;">
+                    <i class="fas fa-sync"></i> Calculate Quality Score
+                </button>
+
+                <div id="quality-report-container"></div>
+            </div>
+
+            <!-- Sample Download Tab -->
+            <div id="sample" class="tab-content">
+                <h3><i class="fas fa-download"></i> Download Sample</h3>
+                <p style="color: var(--text-secondary); margin-bottom: 1rem;">Get a smaller sample of the dataset for
+                    testing or preview purposes.</p>
+
+                <div class="sample-options"
+                    style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
+                    <div class="card" style="text-align: center; padding: 1.5rem;">
+                        <h4>1% Sample</h4>
+                        <p style="color: var(--text-secondary); font-size: 0.9rem;">~{{ (stats.total_rows * 0.01)|int }}
+                            rows</p>
+                        <button onclick="downloadSample({{ dataset.id }}, 0.01)" class="btn btn-secondary"
+                            style="width: 100%; margin-top: 0.5rem;">
+                            <i class="fas fa-download"></i> Download
+                        </button>
+                    </div>
+                    <div class="card" style="text-align: center; padding: 1.5rem;">
+                        <h4>5% Sample</h4>
+                        <p style="color: var(--text-secondary); font-size: 0.9rem;">~{{ (stats.total_rows * 0.05)|int }}
+                            rows</p>
+                        <button onclick="downloadSample({{ dataset.id }}, 0.05)" class="btn btn-secondary"
+                            style="width: 100%; margin-top: 0.5rem;">
+                            <i class="fas fa-download"></i> Download
+                        </button>
+                    </div>
+                    <div class="card" style="text-align: center; padding: 1.5rem;">
+                        <h4>10% Sample</h4>
+                        <p style="color: var(--text-secondary); font-size: 0.9rem;">~{{ (stats.total_rows * 0.10)|int }}
+                            rows</p>
+                        <button onclick="downloadSample({{ dataset.id }}, 0.10)" class="btn btn-primary"
+                            style="width: 100%; margin-top: 0.5rem;">
+                            <i class="fas fa-download"></i> Download
+                        </button>
+                    </div>
+                    <div class="card" style="text-align: center; padding: 1.5rem;">
+                        <h4>25% Sample</h4>
+                        <p style="color: var(--text-secondary); font-size: 0.9rem;">~{{ (stats.total_rows * 0.25)|int }}
+                            rows</p>
+                        <button onclick="downloadSample({{ dataset.id }}, 0.25)" class="btn btn-secondary"
+                            style="width: 100%; margin-top: 0.5rem;">
+                            <i class="fas fa-download"></i> Download
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <-o Dashboards Tab -->
+                <div id="dashboards" class="tab-content">
+                    <h3><i class="fas fa-chart-bar"></i> Interactive Dashboards</h3>
+                    <p style="color: var(--text-secondary); margin-bottom: 1.5rem;">Auto-generated visualizations based
+                        on your data</p>
+
+                    <button onclick="loadDashboards({{ dataset.id }})" class="btn btn-primary"
+                        style="margin-bottom: 2rem;">
+                        <i class="fas fa-sync"></i> Load Dashboards
+                    </button>
+
+                    <div id="dashboards-container"></div>
+                </div>
+
+                <-o Data Profiling Tab -->
+                    <div id="profile" class="tab-content">
+                        <h3><i class="fas fa-file-alt"></i> Data Profiling Report</h3>
+                        <p style="color: var(--text-secondary); margin-bottom: 1.5rem;">Comprehensive statistical
+                            analysis of your dataset</p>
+
+                        <button onclick="loadProfile({{ dataset.id }})" class="btn btn-primary"
+                            style="margin-bottom: 2rem;">
+                            <i class="fas fa-sync"></i> Generate Profile Report
+                        </button>
+
+                        <div id="profile-container"></div>
+                    </div>
+
+
+                    <div id="preview" class="tab-content active">
+                        <div id="preview-table-container">Loading preview...</div>
+                    </div>
+
+                    <div id="clean" class="tab-content">
+                        <div class="clean-controls">
+                            <label><input type="checkbox" id="drop-na"> Drop Missing Values</label>
+                            <label><input type="checkbox" id="drop-dup"> Drop Duplicates</label>
+                            <button onclick="runCleaning({{ dataset.id }})" class="btn btn-secondary">Preview Cleaned
+                                Data</button>
+                            <button onclick="downloadCleaned({{ dataset.id }})" class="btn btn-primary">Download Cleaned
+                                Data</button>
+                        </div>
+                        <div id="clean-preview-container"></div>
+                    </div>
+
+                    <div id="advanced-clean" class="tab-content">
+                        <h3>Advanced Data Engineering</h3>
+
+                        <div class="card" style="margin-bottom: 1rem;">
+                            <h4>Outlier Detection & Removal</h4>
+                            <div class="form-group">
+                                <label>Select Numeric Columns</label>
+                                <select id="outlier-cols" multiple style="height: 80px;"></select>
+                            </div>
+                            <div class="form-group">
+                                <label>Method</label>
+                                <select id="outlier-method">
+                                    <option value="z_score">Z-Score</option>
+                                    <option value="iqr">IQR</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Threshold (for Z-Score)</label>
+                                <input type="number" id="outlier-threshold" value="3.0" step="0.1">
+                            </div>
+                            <button onclick="runOutlierRemoval({{ dataset.id }})" class="btn btn-primary">Remove
+                                Outliers</button>
+                        </div>
+
+                        <div class="card" style="margin-bottom: 1rem;">
+                            <h4>Data Transformation</h4>
+                            <div class="form-group">
+                                <label>Select Column</label>
+                                <select id="transform-col"></select>
+                            </div>
+                            <div class="form-group">
+                                <label>Transformation</label>
+                                <select id="transform-method">
+                                    <option value="log">Log Transform</option>
+                                    <option value="sqrt">Square Root</option>
+                                    <option value="square">Square</option>
+                                </select>
+                            </div>
+                            <button onclick="runTransformation({{ dataset.id }})" class="btn btn-primary">Apply
+                                Transform</button>
+                        </div>
+
+                        <div class="card">
+                            <h4>Feature Engineering</h4>
+                            <div class="form-group">
+                                <label>New Column Name</label>
+                                <input type="text" id="new-col-name" placeholder="e.g., total_value">
+                            </div>
+                            <div class="form-group">
+                                <label>Expression</label>
+                                <input type="text" id="feature-expr" placeholder="e.g., col_a + col_b">
+                                <small>Use column names from your dataset</small>
+                            </div>
+                            <button onclick="runFeatureEngineering({{ dataset.id }})" class="btn btn-primary">Create
+                                Feature</button>
+                        </div>
+
+                        <div id="advanced-preview-container" style="margin-top: 1rem;"></div>
+                    </div>
+
+                    <div id="visualize" class="tab-content">
+                        <div class="viz-controls">
+                            <h3>Custom Visualization</h3>
+                            <div class="form-group">
+                                <label>X Axis</label>
+                                <select id="viz-x-col"></select>
+                            </div>
+                            <div class="form-group">
+                                <label>Y Axis (Optional)</label>
+                                <select id="viz-y-col">
+                                    <option value="">None</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Chart Type</label>
+                                <select id="viz-type">
+                                    <option value="bar">Bar Chart</option>
+                                    <option value="scatter">Scatter Plot</option>
+                                    <option value="histogram">Histogram</option>
+                                </select>
+                            </div>
+                            <button onclick="runVisualization({{ dataset.id }})" class="btn btn-primary">Generate
+                                Chart</button>
+                            <button onclick="downloadChart('viz-canvas')" class="btn btn-secondary">Download
+                                Chart</button>
+                        </div>
+                        <div class="chart-container" style="position: relative; height:400px; width:100%">
+                            <canvas id="viz-canvas"></canvas>
+                        </div>
+
+                        <div class="auto-viz-section"
+                            style="margin-top: 3rem; border-top: 1px solid var(--border-color); padding-top: 1rem;">
+                            <h3>Correlation Heatmap</h3>
+                            <button onclick="runCorrelationHeatmap({{ dataset.id }})" class="btn btn-secondary">Generate
+                                Heatmap</button>
+                            <div id="heatmap-container" style="margin-top: 1rem;"></div>
+                        </div>
+
+                        <div class="auto-viz-section"
+                            style="margin-top: 2rem; border-top: 1px solid var(--border-color); padding-top: 1rem;">
+                            <h3>Box Plot</h3>
+                            <div class="form-group">
+                                <label>Select Column</label>
+                                <select id="boxplot-col"></select>
+                            </div>
+                            <button onclick="runBoxPlot({{ dataset.id }})" class="btn btn-secondary">Generate Box
+                                Plot</button>
+                            <div id="boxplot-container" style="margin-top: 1rem; height: 300px;">
+                                <canvas id="boxplot-canvas"></canvas>
+                            </div>
+                        </div>
+
+                        <div class="auto-viz-section"
+                            style="margin-top: 3rem; border-top: 1px solid var(--border-color); padding-top: 1rem;">
+                            <h3>Auto-Generated Insights</h3>
+                            <button onclick="runAutoViz({{ dataset.id }})" class="btn btn-secondary">Generate Auto
+                                Plots</button>
+                            <div id="auto-viz-container" class="grid" style="margin-top: 1rem;"></div>
+                        </div>
+                    </div>
+
+                    <div id="synthetic" class="tab-content">
+                        <div class="synthetic-controls">
+                            <h3>Generate Synthetic Data</h3>
+                            <p>Create a new dataset that mimics the statistical properties of this dataset.</p>
+                            <div class="form-group">
+                                <label>Number of Rows to Generate</label>
+                                <input type="number" id="synthetic-rows" value="100" min="10" max="5000">
+                            </div>
+                            <button onclick="generateSynthetic({{ dataset.id }})" class="btn btn-primary">Generate &
+                                Download</button>
+                        </div>
+                    </div>
+
+                    <div id="ml" class="tab-content">
+                        <div class="ml-controls">
+                            <div class="form-group">
+                                <label>Target Column</label>
+                                <select id="target-col"></select>
+                            </div>
+                            <div class="form-group">
+                                <label>Feature Columns</label>
+                                <select id="feature-cols" multiple></select>
+                            </div>
+                            <div class="form-group">
+                                <label>Model Type</label>
+                                <select id="model-type">
+                                    <option value="auto">Auto-Detect</option>
+                                    <option value="linear_regression">Linear Regression</option>
+                                    <option value="logistic_regression">Logistic Regression</option>
+                                    <option value="random_forest_regressor">Random Forest Regressor</option>
+                                    <option value="random_forest_classifier">Random Forest Classifier</option>
+                                    <option value="kmeans">K-Means Clustering</option>
+                                </select>
+                            </div>
+                            <button onclick="runML({{ dataset.id }})" class="btn btn-primary">Train Model</button>
+                        </div>
+                        <div id="ml-results"></div>
+
+                        <div id="prediction-section"
+                            style="display:none; margin-top: 2rem; border-top: 1px solid var(--border-color); padding-top: 1rem;">
+                            <h3>Make Predictions</h3>
+                            <div id="prediction-inputs"></div>
+                            <button onclick="runPrediction({{ dataset.id }})" class="btn btn-success"
+                                style="margin-top: 1rem;">Predict</button>
+                            <div id="prediction-result" style="margin-top: 1rem; font-weight: bold;"></div>
+                            <div style="margin-top: 1rem;">
+                                <a href="{{ url_for('data.download_model', dataset_id=dataset.id) }}"
+                                    class="btn btn-secondary">Download Model</a>
+                            </div>
+                        </div>
+                    </div>
+        </div>
+        {% endif %}
+
+        <div class="section reviews" style="margin-top: 3rem;">
+            <h3>Reviews & Ratings</h3>
+
+            {% if current_user.is_authenticated and has_access and current_user.id != dataset.owner_id %}
+            <div class="card" style="margin-bottom: 2rem;">
+                <h4>Leave a Review</h4>
+                <form id="review-form">
+                    <div class="form-group">
+                        <label>Rating</label>
+                        <select id="review-rating" required>
+                            <option value="">Select rating</option>
+                            <option value="5">5 - Excellent</option>
+                            <option value="4">4 - Good</option>
+                            <option value="3">3 - Average</option>
+                            <option value="2">2 - Poor</option>
+                            <option value="1">1 - Very Poor</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Comment</label>
+                        <textarea id="review-comment" rows="4"
+                            placeholder="Share your experience with this dataset..."></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Submit Review</button>
+                </form>
+            </div>
+            {% endif %}
+
+            <div id="reviews-list">
+                {% if dataset.reviews %}
+                {% for review in dataset.reviews %}
+                <div class="card" style="margin-bottom: 1rem;">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <strong>{{ review.user.username if review.user else 'Anonymous' }}</strong>
+                        <span style="color: var(--primary-color);">★ {{ review.rating }}/5</span>
+                    </div>
+                    <p style="margin-top: 0.5rem;">{{ review.comment }}</p>
+                    <small style="color: var(--text-muted);">{{ review.timestamp.strftime('%Y-%m-%d') }}</small>
+                </div>
+                {% endfor %}
+                {% else %}
+                <p>No reviews yet. Be the first to review this dataset!</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if has_access %}
+<script>
+    // Pass dataset ID and columns to JS
+    const DATASET_ID = {{ dataset.id }};
+    const COLUMNS = {{ stats.columns | tojson if stats else '[]' }};
+</script>
+{% endif %}
+{% endblock %}

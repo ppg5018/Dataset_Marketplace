@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="dashboard">
+    <div class="dashboard-header">
+        <h2>My Dashboard</h2>
+        <a href="{{ url_for('marketplace.upload_dataset') }}" class="btn btn-primary">Upload New Dataset</a>
+    </div>
+
+    <div class="section">
+        <h3>My Uploads</h3>
+        <div class="grid">
+            {% for dataset in my_datasets %}
+            <div class="card dataset-card">
+                <div class="card-header">
+                    <h3>{{ dataset.title }}</h3>
+                    <span class="price">${{ dataset.price }}</span>
+                </div>
+                <p>Sales: {{ dataset.transactions|length }}</p>
+                <div class="card-footer">
+                    <a href="{{ url_for('marketplace.dataset_detail', dataset_id=dataset.id) }}"
+                        class="btn btn-secondary">View</a>
+                </div>
+            </div>
+            {% else %}
+            <p>You haven't uploaded any datasets yet.</p>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="section">
+        <h3>My Purchases</h3>
+        <div class="grid">
+            {% for t in purchased %}
+            <div class="card dataset-card">
+                <div class="card-header">
+                    <h3>{{ t.dataset.title }}</h3>
+                </div>
+                <p>Purchased on: {{ t.timestamp.strftime('%Y-%m-%d') }}</p>
+                <div class="card-footer">
+                    <a href="{{ url_for('marketplace.dataset_detail', dataset_id=t.dataset.id) }}"
+                        class="btn btn-primary">Analyze Data</a>
+                </div>
+            </div>
+            {% else %}
+            <p>You haven't purchased any datasets yet.</p>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="seller-profile">
+    <div class="profile-header"
+        style="background: linear-gradient(135deg, var(--primary-color), var(--accent-color)); padding: 3rem 2rem; border-radius: 8px; margin-bottom: 2rem; color: white;">
+        <h1>{{ seller.username }}</h1>
+        {% if seller.bio %}
+        <p style="margin-top: 1rem; opacity: 0.9;">{{ seller.bio }}</p>
+        {% endif %}
+        <div style="display: flex; gap: 2rem; margin-top: 1.5rem;">
+            <div>
+                <strong>Datasets</strong>
+                <p>{{ datasets|length }}</p>
+            </div>
+            <div>
+                <strong>Avg Rating</strong>
+                <p>★ {{ "%.1f"|format(avg_rating) }}/5</p>
+            </div>
+            <div>
+                <strong>Total Reviews</strong>
+                <p>{{ total_reviews }}</p>
+            </div>
+        </div>
+    </div>
+
+    <h2>Datasets by {{ seller.username }}</h2>
+
+    {% if datasets %}
+    <div class="grid">
+        {% for dataset in datasets %}
+        <div class="card">
+            <h3><a href="{{ url_for('marketplace.dataset_detail', dataset_id=dataset.id) }}">{{ dataset.title }}</a>
+            </h3>
+            <p>{{ dataset.description[:100] }}...</p>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 1rem;">
+                <span class="badge">{% if dataset.price == 0 %}Free{% else %} ${{ dataset.price }}{% endif %}</span>
+                <span style="font-size: 0.85rem; color: var(--text-muted);">{{ dataset.created_at.strftime('%Y-%m-%d')
+                    }}</span>
+            </div>
+            {% if dataset.reviews %}
+            <div style="margin-top: 0.5rem;">
+                <span style="color: var(--primary-color);">★ {{
+                    "%.1f"|format(dataset.reviews|map(attribute='rating')|sum / dataset.reviews|length) }}</span>
+                <span style="font-size: 0.85rem; color: var(--text-muted);">({{ dataset.reviews|length }}
+                    reviews)</span>
+            </div>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <p>This seller has not uploaded any datasets yet.</p>
+    {% endif %}
+</div>
+{% endblock %}

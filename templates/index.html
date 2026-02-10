@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="hero">
+    <h1>Explore Professional Datasets</h1>
+    <p>Discover, analyze, and purchase high-quality datasets powered by Apache Spark</p>
+    <div class="search-box">
+        <input type="text" placeholder="Search datasets..." id="dataset-search">
+        <button class="btn btn-primary"><i class="fas fa-search"></i> Search</button>
+    </div>
+</div>
+
+<div class="marketplace-grid" style="padding-top: 40px;">
+    <div style="margin-bottom: 24px;">
+        <h2 style="font-size: 24px; font-weight: 600; color: var(--text-primary);">Available Datasets</h2>
+        <p style="color: var(--text-secondary); margin-top: 8px;">Browse and discover datasets for your data science
+            projects</p>
+    </div>
+
+    <div class="grid">
+        {% for dataset in datasets %}
+        <div class="card dataset-card">
+            <div class="card-header">
+                <h3><a href="{{ url_for('marketplace.dataset_detail', dataset_id=dataset.id) }}">{{ dataset.title }}</a>
+                </h3>
+            </div>
+            <p class="description">{{ dataset.description if dataset.description|length < 150 else
+                    dataset.description[:147] + '...' }}</p>
+
+                    <div class="card-meta">
+                        {% if dataset.quality_score > 0 %}
+                        <span
+                            class="quality-badge quality-{{ 'A' if dataset.quality_score >= 90 else 'B' if dataset.quality_score >= 80 else 'C' if dataset.quality_score >= 70 else 'D' if dataset.quality_score >= 60 else 'F' }}"
+                            style="background: {% if dataset.quality_score >= 90 %}#10b981{% elif dataset.quality_score >= 80 %}#3b82f6{% elif dataset.quality_score >= 70 %}#f59e0b{% elif dataset.quality_score >= 60 %}#f97316{% else %}#ef4444{% endif %}; color: white; padding: 2px 8px; border-radius: 4px; font-weight: 600; font-size: 0.75rem;">
+                            {{ 'A' if dataset.quality_score >= 90 else 'B' if dataset.quality_score >= 80 else 'C' if
+                            dataset.quality_score >= 70 else 'D' if dataset.quality_score >= 60 else 'F' }} Quality
+                        </span>
+                        {% endif %}
+                        <span><i class="fas fa-file-csv"></i> CSV</span>
+                        <span><i class="fas fa-calendar"></i> {{ dataset.created_at.strftime('%b %Y') }}</span>
+                        {% if dataset.reviews %}
+                        <span><i class="fas fa-star"></i> {{ "%.1f"|format(dataset.reviews|map(attribute='rating')|sum /
+                            dataset.reviews|length) }}</span>
+                        {% endif %}
+                        {% if dataset.view_count > 0 %}
+                        <span><i class="fas fa-eye"></i> {{ dataset.view_count }} views</span>
+                        {% endif %}
+                    </div>
+
+                    <div class="card-footer">
+                        <span class="owner">{{ dataset.owner.username }}</span>
+                        <span class="price">{% if dataset.price == 0 %}Free{% else %} ${{ dataset.price }}{% endif
+                            %}</span>
+                    </div>
+        </div>
+        {% else %}
+        <div style="grid-column: 1 / -1; text-align: center; padding: 60px 20px;">
+            <i class="fas fa-database" style="font-size: 48px; color: var(--text-muted); margin-bottom: 16px;"></i>
+            <p style="color: var(--text-secondary); font-size: 16px;">No datasets available yet. Be the first to upload!
+            </p>
+            {% if current_user.is_authenticated and current_user.role == 'seller' %}
+            <a href="{{ url_for('marketplace.upload_dataset') }}" class="btn btn-primary" style="margin-top: 16px;">
+                <i class="fas fa-upload"></i> Upload Dataset
+            </a>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<script>
+    // Simple client-side search
+    document.getElementById('dataset-search')?.addEventListener('input', function (e) {
+        const searchTerm = e.target.value.toLowerCase();
+        const cards = document.querySelectorAll('.dataset-card');
+
+        cards.forEach(card => {
+            const title = card.querySelector('h3').textContent.toLowerCase();
+            const desc = card.querySelector('.description').textContent.toLowerCase();
+
+            if (title.includes(searchTerm) || desc.includes(searchTerm)) {
+                card.style.display = 'flex';
+            } else {
+                card.style.display = 'none';
+            }
+        });
+    });
+</script>
+{% endblock %}

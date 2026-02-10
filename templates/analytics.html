@@ -1,0 +1,193 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="analytics-dashboard">
+    <h1><i class="fas fa-chart-line"></i> Analytics Dashboard</h1>
+
+    {% if is_buyer %}
+    <!-- Buyer View: Popular Datasets -->
+    <div class="section">
+        <h2>📈 Trending Datasets</h2>
+        <p style="color: var(--text-secondary); margin-bottom: 2rem;">Most viewed datasets on the platform</p>
+
+        <div class="grid" style="grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));">
+            {% for dataset in popular_datasets %}
+            <div class="card">
+                <h3><a href="{{ url_for('marketplace.dataset_detail', dataset_id=dataset.id) }}">{{ dataset.title }}</a>
+                </h3>
+                <div class="dataset-stats" style="margin-top: 1rem; display: flex; gap: 1rem; flex-wrap: wrap;">
+                    <span><i class="fas fa-eye"></i> {{ dataset.view_count }} views</span>
+                    {% if dataset.quality_score > 0 %}
+                    <span
+                        style="background: {% if dataset.quality_score >= 90 %}#10b981{% elif dataset.quality_score >= 80 %}#3b82f6{% else %}#f59e0b{% endif %}; color: white; padding: 2px 8px; border-radius: 4px; font-size: 0.85rem;">
+                        {{ 'A' if dataset.quality_score >= 90 else 'B' if dataset.quality_score >= 80 else 'C' if
+                        dataset.quality_score >= 70 else 'D' if dataset.quality_score >= 60 else 'F' }} Quality
+                    </span>
+                    {% endif %}
+                    <span><i class="fas fa-user"></i> {{ dataset.owner.username }}</span>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    {% else %}
+    <!-- Seller View: My Dataset Analytics -->
+    <div class="stats-overview"
+        style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; margin-bottom: 3rem;">
+        <div class="stat-card"
+            style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 2rem; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+            <div style="font-size: 0.9rem; opacity: 0.9; margin-bottom: 0.5rem;"><i class="fas fa-eye"></i> Total Views
+            </div>
+            <div style="font-size: 2.5rem; font-weight: 700;">{{ total_views }}</div>
+        </div>
+
+        <div class="stat-card"
+            style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; padding: 2rem; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+            <div style="font-size: 0.9rem; opacity: 0.9; margin-bottom: 0.5rem;"><i class="fas fa-download"></i> Total
+                Downloads</div>
+            <div style="font-size: 2.5rem; font-weight: 700;">{{ total_downloads }}</div>
+        </div>
+
+        <div class="stat-card"
+            style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: white; padding: 2rem; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+            <div style="font-size: 0.9rem; opacity: 0.9; margin-bottom: 0.5rem;"><i class="fas fa-code"></i> Total
+                Queries</div>
+            <div style="font-size: 2.5rem; font-weight: 700;">{{ total_queries }}</div>
+        </div>
+
+        <div class="stat-card"
+            style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); color: white; padding: 2rem; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+            <div style="font-size: 0.9rem; opacity: 0.9; margin-bottom: 0.5rem;"><i class="fas fa-dollar-sign"></i>
+                Total Revenue</div>
+            <div style="font-size: 2.5rem; font-weight: 700;">${{ "%.2f"|format(total_revenue) }}</div>
+        </div>
+    </div>
+
+    <!-- Charts -->
+    <div class="charts-grid"
+        style="display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 2rem; margin-bottom: 3rem;">
+        <div class="card" style="padding: 2rem;">
+            <h3 style="margin-bottom: 1.5rem;"><i class="fas fa-chart-bar"></i> Views by Dataset</h3>
+            <canvas id="viewsChart" style="max-height: 300px;"></canvas>
+        </div>
+
+        <div class="card" style="padding: 2rem;">
+            <h3 style="margin-bottom: 1.5rem;"><i class="fas fa-chart-pie"></i> Engagement Breakdown</h3>
+            <canvas id="engagementChart" style="max-height: 300px;"></canvas>
+        </div>
+    </div>
+
+    <!-- Dataset Table -->
+    <div class="section">
+        <h2><i class="fas fa-table"></i> Dataset Performance</h2>
+        <div class="card" style="padding: 0; overflow: hidden;">
+            <table style="width: 100%;">
+                <thead style="background: var(--bg-secondary);">
+                    <tr>
+                        <th style="padding: 1rem; text-align: left;">Dataset</th>
+                        <th style="padding: 1rem; text-align: center;">Views</th>
+                        <th style="padding: 1rem; text-align: center;">Downloads</th>
+                        <th style="padding: 1rem; text-align: center;">Queries</th>
+                        <th style="padding: 1rem; text-align: center;">Quality</th>
+                        <th style="padding: 1rem; text-align: right;">Revenue</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for dataset in datasets %}
+                    <tr style="border-bottom: 1px solid var(--border);">
+                        <td style="padding: 1rem;">
+                            <a href="{{ url_for('marketplace.dataset_detail', dataset_id=dataset.id) }}"
+                                style="font-weight: 600; color: var(--primary-color);">{{ dataset.title }}</a>
+                        </td>
+                        <td style="padding: 1rem; text-align: center;">{{ dataset.view_count }}</td>
+                        <td style="padding: 1rem; text-align: center;">{{ dataset.download_count }}</td>
+                        <td style="padding: 1rem; text-align: center;">{{ dataset.query_count }}</td>
+                        <td style="padding: 1rem; text-align: center;">
+                            {% if dataset.quality_score > 0 %}
+                            <span
+                                style="background: {% if dataset.quality_score >= 90 %}#10b981{% elif dataset.quality_score >= 80 %}#3b82f6{% else %}#f59e0b{% endif %}; color: white; padding: 4px 10px; border-radius: 4px; font-weight: 600; font-size: 0.85rem;">
+                                {{ 'A' if dataset.quality_score >= 90 else 'B' if dataset.quality_score >= 80 else 'C'
+                                if dataset.quality_score >= 70 else 'D' if dataset.quality_score >= 60 else 'F' }}
+                            </span>
+                            {% else %}
+                            <span style="color: var(--text-secondary);">-</span>
+                            {% endif %}
+                        </td>
+                        <td style="padding: 1rem; text-align: right; font-weight: 600;">${{ "%.2f"|format(dataset.price
+                            * dataset.download_count) }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+{% if not is_buyer %}
+<!-- Chart.js Scripts for Seller Dashboard -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // Views by Dataset Chart
+    const viewsCtx = document.getElementById('viewsChart').getContext('2d');
+    new Chart(viewsCtx, {
+        type: 'bar',
+        data: {
+            labels: [{% for d in datasets %}'{{ d.title[:20] }}...',{% endfor %}],
+        datasets: [{
+            label: 'Views',
+            data: [{% for d in datasets %}{{ d.view_count }}, {% endfor %}],
+        backgroundColor: 'rgba(102, 126, 234, 0.8)',
+        borderColor: 'rgba(102, 126, 234, 1)',
+        borderWidth: 1
+            }]
+        },
+        options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: { display: false }
+        },
+        scales: {
+            y: {
+                beginAtZero: true,
+                ticks: { color: getComputedStyle(document.documentElement).getPropertyValue('--text-primary') }
+            },
+            x: {
+                ticks: { color: getComputedStyle(document.documentElement).getPropertyValue('--text-primary') }
+            }
+        }
+    }
+    });
+
+    // Engagement Breakdown Chart
+    const engagementCtx = document.getElementById('engagementChart').getContext('2d');
+    new Chart(engagementCtx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Views', 'Downloads', 'Queries'],
+            datasets: [{
+                data: [{{ total_views }}, {{ total_downloads }}, {{ total_queries }}],
+        backgroundColor: [
+        'rgba(102, 126, 234, 0.8)',
+        'rgba(245, 87, 108, 0.8)',
+        'rgba(76, 172, 254, 0.8)'
+    ],
+        borderWidth: 0
+            }]
+        },
+        options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                position: 'bottom',
+                labels: { color: getComputedStyle(document.documentElement).getPropertyValue('--text-primary') }
+            }
+        }
+    }
+    });
+</script>
+{% endif %}
+{% endblock %}

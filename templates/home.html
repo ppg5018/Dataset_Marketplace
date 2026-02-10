@@ -1,0 +1,137 @@
+{% extends "base.html" %}
+
+{% block content %}
+<!-- Hero Section -->
+<div
+    style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 80px 0; text-align: center; color: white;">
+    <div class="container">
+        <h1 style="font-size: 48px; font-weight: 700; margin-bottom: 20px; letter-spacing: -1px;">
+            Professional Data Marketplace
+        </h1>
+        <p
+            style="font-size: 20px; margin-bottom: 32px; opacity: 0.95; max-width: 700px; margin-left: auto; margin-right: auto;">
+            Buy, sell, and analyze datasets with the power of Apache Spark. Transform raw data into insights with
+            built-in ML and visualization tools.
+        </p>
+        <div style="display: flex; gap: 16px; justify-content: center;">
+            <a href="{{ url_for('marketplace.browse') }}" class="btn btn-large"
+                style="background: white; color: #667eea; border-color: white;">
+                <i class="fas fa-database"></i> Browse Datasets
+            </a>
+            {% if not current_user.is_authenticated %}
+            <a href="{{ url_for('auth.register') }}" class="btn btn-large"
+                style="background: rgba(255, 255, 255, 0.2); color: white; border: 2px solid white;">
+                <i class="fas fa-rocket"></i> Get Started Free
+            </a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Features Section -->
+<div class="container" style="padding: 80px 0;">
+    <div style="text-align: center; margin-bottom: 60px;">
+        <h2 style="font-size: 36px; font-weight: 700; margin-bottom: 16px;">Powerful Features for Data Professionals
+        </h2>
+        <p style="color: var(--text-secondary); font-size: 18px;">Everything you need to work with big data</p>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 40px;">
+        <!-- Feature 1 -->
+        <div style="text-align: center;">
+            <div
+                style="width: 80px; height: 80px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 16px; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; color: white; font-size: 32px;">
+                <i class="fas fa-bolt"></i>
+            </div>
+            <h3 style="font-size: 20px; font-weight: 600; margin-bottom: 12px;">Apache Spark Powered</h3>
+            <p style="color: var(--text-secondary); line-height: 1.6;">
+                Process datasets of any size with distributed computing. Handle GBs to TBs of data effortlessly.
+            </p>
+        </div>
+
+        <!-- Feature 2 -->
+        <div style="text-align: center;">
+            <div
+                style="width: 80px; height: 80px; background: linear-gradient(135deg, #20BEFF 0%, #1976D2 100%); border-radius: 16px; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; color: white; font-size: 32px;">
+                <i class="fas fa-brain"></i>
+            </div>
+            <h3 style="font-size: 20px; font-weight: 600; margin-bottom: 12px;">Built-in Machine Learning</h3>
+            <p style="color: var(--text-secondary); line-height: 1.6;">
+                Train models with Random Forest, Linear Regression, K-Means, and more. No code required.
+            </p>
+        </div>
+
+        <!-- Feature 3 -->
+        <div style="text-align: center;">
+            <div
+                style="width: 80px; height: 80px; background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); border-radius: 16px; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; color: white; font-size: 32px;">
+                <i class="fas fa-chart-line"></i>
+            </div>
+            <h3 style="font-size: 20px; font-weight: 600; margin-bottom: 12px;">Advanced Visualizations</h3>
+            <p style="color: var(--text-secondary); line-height: 1.6;">
+                Create correlation heatmaps, box plots, and interactive charts to explore your data.
+            </p>
+        </div>
+
+        <!-- Feature 4 -->
+        <div style="text-align: center;">
+            <div
+                style="width: 80px; height: 80px; background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); border-radius: 16px; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; color: white; font-size: 32px;">
+                <i class="fas fa-magic"></i>
+            </div>
+            <h3 style="font-size: 20px; font-weight: 600; margin-bottom: 12px;">Data Engineering Tools</h3>
+            <p style="color: var(--text-secondary); line-height: 1.6;">
+                Clean, transform, and engineer features with outlier detection, normalization, and more.
+            </p>
+        </div>
+
+        <!-- Feature 5 -->
+        <div style="text-align: center;">
+            <div
+                style="width: 80px; height: 80px; background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); border-radius: 16px; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; color: white; font-size: 32px;">
+                <i class="fas fa-shield-alt"></i>
+            </div>
+            <h3 style="font-size: 20px; font-weight: 600; margin-bottom: 12px;">Secure Marketplace</h3>
+            <p style="color: var(--text-secondary); line-height: 1.6;">
+                Buy and sell datasets securely. Reviews, ratings, and seller profiles for trust.
+            </p>
+        </div>
+
+        <!-- Feature 6 -->
+        <div style="text-align: center;">
+            <div
+                style="width: 80px; height: 80px; background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); border-radius: 16px; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; color: white; font-size: 32px;">
+                <i class="fas fa-download"></i>
+            </div>
+            <h3 style="font-size: 20px; font-weight: 600; margin-bottom: 12px;">Instant Access</h3>
+            <p style="color: var(--text-secondary); line-height: 1.6;">
+                Download cleaned data, trained models, and visualizations instantly after purchase.
+            </p>
+        </div>
+    </div>
+</div>
+
+<!-- CTA Section -->
+<div style="background: var(--bg-secondary); padding: 80px 0; margin-top: 80px;">
+    <div class="container" style="text-align: center;">
+        <h2 style="font-size: 36px; font-weight: 700; margin-bottom: 16px;">Ready to Get Started?</h2>
+        <p style="color: var(--text-secondary); font-size: 18px; margin-bottom: 32px;">
+            Join thousands of data professionals using DataMarket
+        </p>
+        <div style="display: flex; gap: 16px; justify-content: center;">
+            <a href="{{ url_for('marketplace.browse') }}" class="btn btn-large btn-primary">
+                <i class="fas fa-search"></i> Explore Datasets
+            </a>
+            {% if current_user.is_authenticated and current_user.role == 'seller' %}
+            <a href="{{ url_for('marketplace.upload_dataset') }}" class="btn btn-large btn-secondary">
+                <i class="fas fa-upload"></i> Upload Dataset
+            </a>
+            {% elif not current_user.is_authenticated %}
+            <a href="{{ url_for('auth.register') }}" class="btn btn-large btn-secondary">
+                <i class="fas fa-user-plus"></i> Create Account
+            </a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
